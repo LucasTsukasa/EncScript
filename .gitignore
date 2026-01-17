@@ -1,0 +1,19 @@
+venv/
+__pycache__/
+*.pyc
+
+# Dados Sensíveis
+.env
+
+# Banco de dados
+*.db
+
+# Sessões
+*.session
+*.session-journal
+
+# Configurações locais
+settings.json
+
+# Logs
+*.log
