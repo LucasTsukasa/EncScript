@@ -45,27 +45,18 @@ class StorageRepository:
             conn.commit()
 
     def reset_chat_progress(self, source_chat: int, target_chat: int):
-        """Limpa todo o progresso para este par de chats (Opção 1)."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            # Remove mapeamentos
             cursor.execute("""
                 DELETE FROM topic_map 
                 WHERE source_chat_id = ? AND target_chat_id = ?
             """, (source_chat, target_chat))
             
-            # Remove status de mensagens (sync_state)
-            # Nota: sync_state não tem target_id, removemos baseado no source
             cursor.execute("DELETE FROM sync_state WHERE source_chat_id = ?", (source_chat,))
-            
-            # Remove status de conclusão
             cursor.execute("DELETE FROM topic_status WHERE source_chat_id = ?", (source_chat,))
-            
             conn.commit()
 
-    # --- STATUS DO TÓPICO ---
     def is_topic_completed(self, source_chat: int, topic_id: int) -> bool:
-        """Verifica se o tópico foi marcado como 100% concluído."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -76,7 +67,6 @@ class StorageRepository:
             return bool(row and row[0])
 
     def mark_topic_completed(self, source_chat: int, topic_id: int):
-        """Marca o tópico como concluído após processar todas as mensagens."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -84,13 +74,14 @@ class StorageRepository:
                 VALUES (?, ?, 1)
             """, (source_chat, topic_id))
             conn.commit()
-    # -------------------------------
 
     def export_topics_manifest(self, topics: List[Tuple[int, str]]) -> str:
         filename = "topics_config.txt"
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write("# ID | Tópico | Clonar (ON/OFF)\n")
-            f.write("# Edite 'ON' para 'OFF' se não quiser clonar.\n\n")
+            # ATUALIZAÇÃO 4: Cabeçalho com nova instrução 'P'
+            f.write("# ID | Tópico | Clonar (ON/OFF/P)\n")
+            f.write("# ON = Clonar | OFF = Ignorar | P = Prioridade (Clona SÓ os marcados com P)\n")
+            f.write("# Edite 'ON' para 'OFF' ou 'P'.\n\n")
             
             for t_id, t_title in topics:
                 safe_title = t_title.replace("|", "-")
@@ -99,7 +90,11 @@ class StorageRepository:
 
     def read_topics_manifest(self) -> List[int]:
         filename = "topics_config.txt"
-        allowed_ids = []
+        
+        # ATUALIZAÇÃO 3: Listas separadas para lógica de prioridade
+        on_ids = []
+        p_ids = []
+        
         if not os.path.exists(filename):
             return []
         
@@ -113,11 +108,23 @@ class StorageRepository:
                     try:
                         t_id = int(parts[0].strip())
                         status = parts[2].strip().upper()
-                        if status == "ON":
-                            allowed_ids.append(t_id)
+                        
+                        # Captura flags
+                        if status == "P":
+                            p_ids.append(t_id)
+                        elif status == "ON":
+                            on_ids.append(t_id)
+                            
                     except ValueError:
                         continue
-        return allowed_ids
+        
+        # ATUALIZAÇÃO 3: Algoritmo de decisão
+        # Se houver ALGUM 'P', retorna apenas os 'P's (ignora ONs e OFFs)
+        if p_ids:
+            return p_ids
+        
+        # Caso contrário, retorna os 'ON's (comportamento padrão)
+        return on_ids
 
     def get_topic_map(self, source_chat: int, target_chat: int) -> Dict[int, int]:
         with sqlite3.connect(self.db_path) as conn:

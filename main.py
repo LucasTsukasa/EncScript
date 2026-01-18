@@ -76,11 +76,15 @@ async def main():
             settings = CLIWizard.settings_menu(settings)
             setup_logging(clean_visual=settings.clean_visual)
             
+        # ATUALIZAÇÃO: Nova opção de Créditos
         elif choice == 4:
+            CLIWizard.show_credits()
+            
+        # ATUALIZAÇÃO: Opção Sair renumerada
+        elif choice == 5:
             await client.disconnect()
             sys.exit(0)
     
-    # ATUALIZAÇÃO: AppConfig agora recebe os valores dinâmicos do settings
     config = AppConfig(
         api_id=api_id, api_hash=api_hash, phone=phone,
         source_chat_id=src, target_chat_id=tgt,

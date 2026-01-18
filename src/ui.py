@@ -10,7 +10,6 @@ console = Console()
 
 class CLIWizard:
     
-    # ... (Métodos anteriores clear_screen, show_header, show_welcome, etc. permanecem iguais)
     @staticmethod
     def clear_screen():
         console.clear()
@@ -24,7 +23,8 @@ class CLIWizard:
     def show_welcome():
         CLIWizard.clear_screen()
         welcome_text = Text("Bem Vindo(a)!", justify="center", style="bold green")
-        panel = Panel(welcome_text, title="EncScript", subtitle="v2.9 Stable", style="cyan")
+        # ATUALIZAÇÃO: Versão 1.1.0
+        panel = Panel(welcome_text, title="EncScript", subtitle="1.1.0", style="cyan")
         console.print(panel)
         console.print("\n[1] Conectar Conta (Aperte [bold white]Enter[/] Para continuar)")
         console.input()
@@ -82,13 +82,35 @@ class CLIWizard:
         [1] Clonar
         [2] Continuar
         [3] Configurações
-        [4] Sair
+        [4] Créditos
+        [5] Sair
         """
         panel = Panel(menu_text, title="EncScript", style="cyan")
         console.print(panel)
         
-        choice = IntPrompt.ask("Escolha", choices=["1", "2", "3", "4"], default="1")
+        # ATUALIZAÇÃO: Aceita opção 5
+        choice = IntPrompt.ask("Escolha", choices=["1", "2", "3", "4", "5"], default="1")
         return choice
+
+    # ATUALIZAÇÃO: Nova função de Créditos
+    @staticmethod
+    def show_credits():
+        CLIWizard.clear_screen()
+        
+        credits_content = """
+  Desenvolvido por: LucasTsukasa
+  Github: https://github.com/LucasTsukasa
+  Licença: GNU General Public License v3
+  Versão: 1.1.0
+
+  Este software é open-source e distribuído sob os termos da GPL v3.
+  Veja o arquivo LICENSE para mais informações.
+        """
+        
+        text = Text(credits_content, justify="center", style="white")
+        panel = Panel(text, title="Créditos", style="cyan")
+        console.print(panel)
+        console.input("\nPressione [bold white]Enter[/] para voltar...")
 
     @staticmethod
     def get_chat_ids() -> tuple[int, int]:
@@ -147,8 +169,6 @@ class CLIWizard:
                 elif current.close_topics == "PARCIAL": current.close_topics = "OFF"
                 else: current.close_topics = "ON"
             elif choice == '7': current.fix_topics = not current.fix_topics
-            
-            # NOVAS OPÇÕES
             elif choice == '8':
                 current.max_session_hours = FloatPrompt.ask("Novo tempo máximo (horas, 0 para desativar)")
             elif choice == '9':
@@ -165,7 +185,6 @@ class CLIWizard:
         
         return current
 
-    # ... (load_settings e show_start_feedback permanecem iguais)
     @staticmethod
     def load_settings() -> AppSettings:
         if os.path.exists("settings.json"):

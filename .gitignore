@@ -17,3 +17,6 @@ settings.json
 
 # Logs
 *.log
+
+#Configuração de Tópicos
+*topics_config.txt

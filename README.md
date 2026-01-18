@@ -126,6 +126,8 @@ Configuração Inicial:
 
 Execute python main.py.
 
+Crie o grupo de destino e ative a opção de tópicos
+
 Insira seu API_ID, API_HASH e Telefone quando solicitado (dados salvos em .env).
 
 Primeira Clonagem:
@@ -174,21 +176,16 @@ Conta Telegram: Recomenda-se uma conta secundária ou dedicada para clonagens ma
 
 Permissões: O usuário deve ser administrador no grupo de destino para criar tópicos, fixar mensagens e alterar dados do grupo.
 
-📁 Estrutura do Projeto
+⚠️ Avisos e Recomendações
 
-telegram_cloner/
-│
-├── main.py              # Ponto de entrada e orquestração
-├── requirements.txt     # Lista de dependências
-├── .env                 # Credenciais (Gerado automaticamente)
-├── settings.json        # Configurações do usuário (Gerado automaticamente)
-├── cloner_data.db       # Banco de dados SQLite (Gerado automaticamente)
-├── cloner.log           # Arquivo de logs
-├── topics_config.txt    # Manifesto de tópicos (Temporário)
-│
-└── src/
-    ├── __init__.py
-    ├── config.py        # Definições, constantes e logging
-    ├── storage.py       # Camada de persistência (SQLite)
-    ├── ui.py            # Interface visual (Menus e Inputs)
-    └── service.py       # Lógica de negócio (Core da clonagem)
+
+
+Recomenda-se utilizar as configurações abaixo com os seguintes tempos:
+
+Tempo Máximo de Clonagem ................ 6.0h
+Tempo Máximo de Descanso ................ 1.0h
+Delay Entre cada Mensagem .............. 1.0s
+Pausa a cada x mensagens ............... 200
+Duração pausa a cada x mensagens ....... 60s
+
+Ao burlar os limites estabelicidos, tenha em mente que sua conta pode ser banida. Então ao usar o EncScript de modo extremo você estará ciente dos riscos envolvidos em tais atos.

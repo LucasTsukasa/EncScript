@@ -26,7 +26,6 @@ class AppSettings:
 
 @dataclass
 class AppConfig:
-    # ... (Resto da classe AppConfig permanece idêntico, apenas receberá os valores via main.py)
     """Configurações de infraestrutura e credenciais."""
     api_id: int
     api_hash: str
@@ -48,12 +47,13 @@ class AppConfig:
     def max_session_seconds(self) -> float:
         return self.max_session_hours * 3600
 
-# ... (Funções setup_logging e save_env_variable permanecem iguais)
 def setup_logging(clean_visual: bool = False):
     """Configura logging."""
     root = logging.getLogger()
+    
+    # CORREÇÃO CRÍTICA: Iterar sobre uma cópia da lista [:] para evitar pular handlers durante a remoção
     if root.handlers:
-        for handler in root.handlers:
+        for handler in root.handlers[:]:
             root.removeHandler(handler)
 
     level_console = logging.ERROR if clean_visual else logging.INFO

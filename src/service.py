@@ -40,10 +40,11 @@ class ClonerService:
         self.is_premium = False
         self.session_start_time = 0
         self.messages_sent = 0
-        self.logged_topics = set() # Correção 5: Controle de logs repetidos
+        self.logged_topics = set()
+        # ATUALIZAÇÃO 2: Contador sequencial da sessão
+        self.session_message_count = 0
 
     def _log_visual(self, message: str, is_error: bool = False, force_clean_view: bool = False):
-        """Gerencia logs visuais vs detalhados."""
         if is_error:
             console.print(f"[bold red]{message}[/]")
             logging.error(message)
@@ -114,7 +115,6 @@ class ClonerService:
                     else:
                         cloning_queue.append((src_id, tgt_id))
 
-                # FASE 1
                 if self.settings.update_msgs_start and maintenance_queue:
                     self._log_visual("⚙️ Atualizando mensagens novas", force_clean_view=True)
                     for src_id, tgt_id in maintenance_queue:
@@ -122,12 +122,10 @@ class ClonerService:
                         await self._process_topic_messages(source, target, src_id, tgt_id)
                     self._log_visual("✅ Atualização de mensagens completa", force_clean_view=True)
 
-                # FASE 2
                 if cloning_queue:
                     for src_id, tgt_id in cloning_queue:
                         self._check_work_time()
                         
-                        # Correção 5: Log único por tópico na sessão
                         if src_id not in self.logged_topics:
                             self._log_visual(f"⚙️ Iniciando Clonagem Tópico {src_id}", force_clean_view=True)
                             self.logged_topics.add(src_id)
@@ -140,7 +138,6 @@ class ClonerService:
 
                 self._log_visual("✅ Clonagem de Grupo Completa", force_clean_view=True)
 
-                # FASE 3
                 if self.settings.update_msgs_end and maintenance_queue:
                     self._log_visual("⚙️ Atualizando mensagens novas (Verificação Final)", force_clean_view=True)
                     for src_id, tgt_id in maintenance_queue:
@@ -152,7 +149,6 @@ class ClonerService:
                 await asyncio.sleep(60)
 
             except WorkTimeLimitReached:
-                # Correção 3: Usa pause_duration_hours (convertido para segundos)
                 sleep_time = self.config.pause_duration_hours * 3600
                 self._log_visual(f"🛑 Pausa para descanso ({self.config.pause_duration_hours}h)...", force_clean_view=True)
                 await asyncio.sleep(sleep_time)
@@ -314,12 +310,9 @@ class ClonerService:
                 return True 
             
             for msg in messages:
-                # Correção 4: Evita duplicação absoluta
                 if msg.id <= last_id: 
                     continue
 
-                # Atualiza last_id localmente, mas só salva no banco ao final do loop seguro
-                # Isso garante que se o processamento da msg falhar, tentamos de novo
                 current_msg_id = msg.id
                 
                 if isinstance(msg, MessageService):
@@ -328,7 +321,9 @@ class ClonerService:
                     continue
 
                 if not self.settings.clean_visual:
-                    logging.info(f"MENSAGEM ID -> {msg.id}")
+                    # ATUALIZAÇÃO 2: Contador sequencial no log
+                    self.session_message_count += 1
+                    logging.info(f"MENSAGEM {self.session_message_count} ID -> {msg.id}")
 
                 media = msg.media
                 if isinstance(media, MessageMediaWebPage):
@@ -350,8 +345,6 @@ class ClonerService:
 
                         parts = [text[i:i+limit] for i in range(0, len(text), limit)]
                         
-                        # Correção 1: Split ainda perde formatação (limitação da API sem parser),
-                        # mas garantimos que se couber, vai para o ELSE (preserva tudo).
                         s1 = await self.client.send_message(
                             target, parts[0], file=media, reply_to=tgt_id, link_preview=False
                         )
@@ -364,8 +357,6 @@ class ClonerService:
                             if not isinstance(s2, list): s2 = [s2]
                             sent_msgs.extend(s2)
                     else:
-                        # Correção 1: Envio do OBJETO msg preserva formatação (Negrito, Links, etc)
-                        # Adicionado link_preview=False para manter consistência
                         s = await self.client.send_message(
                             target, message=msg, reply_to=tgt_id, link_preview=False
                         )
@@ -380,7 +371,6 @@ class ClonerService:
                             await self._cleanup_service_messages(target, tgt_id)
                         except Exception: pass
 
-                    # Correção 2: Pausa Anti-Flood consistente
                     self.messages_sent += len(sent_msgs)
                     if self.messages_sent >= self.config.pause_every_x_messages:
                         self._log_visual("⏸ Pausando para evitar flood...", force_clean_view=True)
@@ -396,7 +386,6 @@ class ClonerService:
                     await self._handle_flood_wait(e)
                 except Exception as e:
                     self._log_visual(f"Erro msg {msg.id}: {e}", is_error=True)
-                    # Se der erro, salva o ID para não travar o loop, assumindo 'skip'
                     last_id = current_msg_id
                     self.storage.save_last_message_id(source.id, src_id, last_id)
         
