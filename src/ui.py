@@ -23,8 +23,7 @@ class CLIWizard:
     def show_welcome():
         CLIWizard.clear_screen()
         welcome_text = Text("Bem Vindo(a)!", justify="center", style="bold green")
-        # ATUALIZAÇÃO: Versão 1.1.0
-        panel = Panel(welcome_text, title="EncScript", subtitle="1.1.0", style="cyan")
+        panel = Panel(welcome_text, title="EncScript", subtitle="1.2.0", style="cyan")
         console.print(panel)
         console.print("\n[1] Conectar Conta (Aperte [bold white]Enter[/] Para continuar)")
         console.input()
@@ -88,11 +87,9 @@ class CLIWizard:
         panel = Panel(menu_text, title="EncScript", style="cyan")
         console.print(panel)
         
-        # ATUALIZAÇÃO: Aceita opção 5
         choice = IntPrompt.ask("Escolha", choices=["1", "2", "3", "4", "5"], default="1")
         return choice
 
-    # ATUALIZAÇÃO: Nova função de Créditos
     @staticmethod
     def show_credits():
         CLIWizard.clear_screen()
@@ -101,7 +98,7 @@ class CLIWizard:
   Desenvolvido por: LucasTsukasa
   Github: https://github.com/LucasTsukasa
   Licença: GNU General Public License v3
-  Versão: 1.1.0
+  Versão: 1.2.0
 
   Este software é open-source e distribuído sob os termos da GPL v3.
   Veja o arquivo LICENSE para mais informações.

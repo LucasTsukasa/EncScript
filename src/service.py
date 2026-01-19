@@ -41,7 +41,6 @@ class ClonerService:
         self.session_start_time = 0
         self.messages_sent = 0
         self.logged_topics = set()
-        # ATUALIZAÇÃO 2: Contador sequencial da sessão
         self.session_message_count = 0
 
     def _log_visual(self, message: str, is_error: bool = False, force_clean_view: bool = False):

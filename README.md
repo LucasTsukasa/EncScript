@@ -1,3 +1,20 @@
+# EncScript
+
+![License](https://img.shields.io/badge/License-GPLv3-blue)
+![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat&logo=python&logoColor=white)
+
+> ⚠️ **AVISO SOBRE MODIFICAÇÕES E RISCO DE BANIMENTO:**
+> 
+> Este software é distribuído sob a licença **GNU GPL v3.0**, permitindo livre estudo e modificação. No entanto, o código original foi rigorosamente calibrado para respeitar os limites de requisição (Rate Limits) do Telegram.
+> 
+> **Atenção:** Alterar os tempos de espera, descanso, pausa a cada x mensagens, remover verificações de segurança ou modificar a lógica de envio pode fazer com que o script viole os Termos de Serviço (ToS) do Telegram. Tais modificações aumentam drasticamente o risco de sua conta ser **restringida ou banida permanentemente**.
+> 
+> O desenvolvedor original **não se responsabiliza** por danos causados por versões modificadas ou uso indevido deste código. Mantenha as proteções ativas para sua segurança.
+
+## Isenção de Garantias ("AS IS")
+
+Este software é fornecido "no estado em que se encontra" (AS IS), sem garantias de qualquer tipo, expressas ou implícitas. O usuário assume total responsabilidade e risco pelo uso deste código.
+
 📌 EncScript
 
 EncScript é uma ferramenta profissional de automação (CLI) desenvolvida em Python para clonagem, espelhamento e backup de supergrupos do Telegram com a funcionalidade de Tópicos (Fóruns) ativada.
