@@ -1,6 +1,10 @@
+<div align="center">
+
 # EncScript
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue) ![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat&logo=python&logoColor=white) ![Safety](https://img.shields.io/badge/Safety-Rate_Limit_Protected-green)
+
+</div>
 
 > ⚠️ **AVISO SOBRE MODIFICAÇÕES E RISCO DE BANIMENTO:**
 > 
@@ -42,10 +46,11 @@ O EncScript resolve a complexidade de manter a estrutura organizacional de fóru
 ## ⚙️ Funcionalidades
 
 * **Clonagem de Tópicos:** Replica o título, cor do ícone e emoji (se Premium) de cada tópico.
+* **Criação Automática de Grupo:** Capacidade de criar automaticamente um novo Supergrupo com Tópicos ativados caso o usuário não tenha um destino.
 * **Sincronização de Mensagens:** Clona texto, fotos, vídeos, documentos e adesivos, mantendo a ordem cronológica.
 * **Gestão de Mensagens Longas:** Divide automaticamente textos maiores que 4096 caracteres (ou limites de mídia) para evitar erros de API.
 * **Persistência Granular:** Salva o estado de cada mensagem processada em banco de dados SQLite, permitindo interrupções e retomadas seguras.
-* **Manifesto de Seleção:** Gera um arquivo `topics_config.txt` permitindo ao usuário escolher quais tópicos deseja clonar ou ignorar.
+* **Manifesto de Seleção com Prioridade:** Gera um arquivo `topics_config.txt` permitindo escolher `ON` (Clonar), `OFF` (Ignorar) ou `P` (Prioridade - foca apenas nestes tópicos).
 * **Espelhamento de Metadados:** Clona foto do grupo, descrição (about) e fixa mensagens importantes conforme a origem.
 * **Gestão de Estado do Tópico:** Fecha tópicos no destino se estiverem fechados na origem (configurável).
 * **Modo de Manutenção:** Capaz de verificar e atualizar mensagens novas em tópicos já clonados anteriormente.
@@ -57,7 +62,7 @@ O EncScript resolve a complexidade de manter a estrutura organizacional de fóru
 ### Pré-requisitos
 1.  **Python 3.8** ou superior instalado.
 2.  Conta Telegram (Recomenda-se uma conta secundária dedicada).
-3.  Permissões de Administrador no grupo de destino.
+3.  Permissões de Administrador no grupo de destino (caso utilize um existente).
 
 ### Passo a Passo
 
@@ -75,10 +80,13 @@ O EncScript resolve a complexidade de manter a estrutura organizacional de fóru
     *Insira seu `API_ID`, `API_HASH` e Telefone quando solicitado (dados salvos localmente em `.env`).*
 
 3.  **Primeira Clonagem:**
-    * Crie o grupo de destino no Telegram e ative a opção de "Tópicos".
     * No menu do script, escolha a opção **[1] Clonar**.
-    * Insira o ID do Grupo Origem e Destino (ex: `-100123456789`).
-    * O script gerará o arquivo `topics_config.txt`. Edite-o se quiser ignorar tópicos (mude ON para OFF) e salve.
+    * Escolha entre **Criar Grupo c/Tópicos** (Automático) ou **Grupo c/Tópicos Criado** (Manual).
+    * Insira o ID do Grupo Origem (ex: `-100123456789`).
+    * O script gerará o arquivo `topics_config.txt`. Edite-o conforme necessário:
+        * `ON`: Clona o tópico.
+        * `OFF`: Ignora o tópico.
+        * `P`: **Prioridade** (Se houver algum tópico marcado com P, o script clonará *apenas* estes e ignorará o resto).
     * Pressione Enter no terminal para iniciar.
 
 4.  **Interrupção e Retomada:**
@@ -104,27 +112,33 @@ O sistema utiliza pausas inteligentes para simular comportamento humano e evitar
 
 O aplicativo é executado via terminal com uma interface visual rica. O menu principal oferece:
 
-* **[1] Clonar:** Inicia um processo do zero. Limpa todo o progresso salvo no banco de dados para os grupos selecionados e recomeça a clonagem. **Ideal para novos setups.**
-* **[2] Continuar:** Retoma o processo de onde parou. Respeita o banco de dados, não duplica mensagens e prioriza a atualização de conteúdo novo antes de criar novos tópicos.
-* **[3] Configurações:** Abre o menu de ajustes finos do comportamento do robô.
-* **[4] Sair:** Encerra a conexão e o aplicativo com segurança.
+* **[1] Clonar:** Inicia um processo do zero. Oferece opção de criar grupo automaticamente. Limpa todo o progresso salvo no banco de dados para os grupos selecionados.
+* **[2] Continuar:** Retoma o processo de onde parou. Respeita o banco de dados, não duplica mensagens e prioriza a atualização de conteúdo novo.
+* **[3] Configurações:** Abre o menu de ajustes finos (Canais e Tempo).
+* **[4] Créditos:** Exibe informações sobre o desenvolvedor e licença.
+* **[5] Sair:** Encerra a conexão e o aplicativo com segurança.
 
 ---
 
 ## 🔧 Configurações
 
-O menu de configurações permite ajustar 12 parâmetros vitais. As alterações são salvas em `settings.json`.
+O menu de configurações foi expandido e dividido em duas categorias. As alterações são salvas em `settings.json`.
 
-* **Atualizar Mensagens no Início (ON/OFF):** Se ativado, busca mensagens novas em tópicos já finalizados logo ao iniciar o script.
-* **Atualizar Mensagens no Fim (ON/OFF):** Se ativado, faz uma varredura final por mensagens novas antes de encerrar o ciclo.
-* **Visual Limpo (ON/OFF):** Se ativado, exibe apenas logs essenciais (início/fim de tópico) no console. Se desativado, mostra cada ID de mensagem processada.
-* **Atualizar Foto/Descrição (ON/OFF):** Clona a foto de perfil e bio do grupo origem.
-* **Fechar Tópico (ON/PARCIAL/OFF):**
-    * `ON`: Fecha todos os tópicos no destino após terminar.
-    * `PARCIAL`: Fecha apenas se estiver fechado na origem.
-    * `OFF`: Mantém todos abertos.
-* **Fixar Tópicos (ON/OFF):** Se ativado, fixa os tópicos no topo da lista conforme a origem.
-* **Tempos e Delays:** Ajustes de tempo de clonagem, descanso e pausas (veja tabela de recomendações).
+### 1. Configurações de Canais/Grupo
+* **Atualizar Mensagens no Início:** Busca mensagens novas em tópicos finalizados ao iniciar.
+* **Atualizar Mensagens no Fim:** Faz varredura final antes de encerrar.
+* **Visual Limpo:** Exibe apenas logs essenciais no console (ideal para performance).
+* **Atualizar Foto:** Clona a foto de perfil da origem.
+* **Atualizar Descrição:** Clona a bio/descrição da origem.
+* **Fechar Tópico (ON/PARCIAL/OFF):** Controla o fechamento de tópicos no destino.
+* **Fixar Tópicos:** Mantém a ordem de fixados da origem.
+
+### 2. Configurações de Tempo
+* **Tempo Máximo de Clonagem:** Define quantas horas o script roda antes de uma pausa longa obrigatória.
+* **Tempo Máximo de Descanso:** Duração da pausa longa (sleep) após atingir o limite de horas.
+* **Delay Entre Mensagens:** Tempo de espera (em segundos) entre cada envio de mensagem.
+* **Pausa a cada X msgs:** Quantidade de mensagens enviadas antes de disparar uma pausa curta ("esfriamento").
+* **Duração da Pausa:** Tempo (em segundos) da pausa curta a cada lote de mensagens.
 
 ---
 
@@ -132,16 +146,16 @@ O menu de configurações permite ajustar 12 parâmetros vitais. As alterações
 
 O EncScript possui três camadas de proteção contra bloqueios da API do Telegram:
 
-1.  **Pausa por Lote:** Configurável. Pausa proativa para "esfriar" a conexão a cada X mensagens.
-2.  **Pausa por Sessão:** Configurável. Simula o descanso de um humano após horas de trabalho.
+1.  **Pausa por Lote (Micro-Pausas):** Configurável. Pausa proativa para "esfriar" a conexão a cada X mensagens (ex: pausa de 60s a cada 200 msgs).
+2.  **Pausa por Sessão (Macro-Pausas):** Configurável. Simula o descanso de um humano após horas de trabalho (ex: dormir 1h após 6h de trabalho).
 3.  **Tratamento de Erro (FloodWait):** Se o Telegram retornar um erro de *FloodWait*, o script detecta automaticamente, exibe um alerta, aguarda o tempo exigido pelo servidor e retoma a operação sem cair.
 
 ---
 
 ## 📂 Persistência e Continuidade
 
-* **Banco de Dados (`cloner_data.db`):** Armazena o mapeamento entre IDs de origem e destino (`topic_map`) e o checkpoint da última mensagem (`sync_state`).
-* **Opção Continuar:** Ao selecionar [2], o sistema lê o `last_message_id` do banco e solicita à API apenas mensagens com ID superior a este. Isso garante eficiência e evita duplicações.
+* **Banco de Dados (`cloner_data.db`):** Armazena o mapeamento entre IDs de origem e destino (`topic_map`), o checkpoint da última mensagem (`sync_state`) e o status de conclusão (`topic_status`).
+* **Opção Continuar:** Ao selecionar [2], o sistema lê o `last_message_id` do banco e solicita à API apenas mensagens com ID superior a este.
 * **Logs:**
     * **Console:** Progresso em tempo real.
     * **Arquivo `cloner.log`:** Registra todos os eventos, avisos e erros com timestamp, independente da configuração visual (útil para auditoria).

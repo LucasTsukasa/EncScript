@@ -3,8 +3,9 @@ import logging
 import os
 import sys
 from telethon import TelegramClient, errors
+from telethon.tl.functions.channels import CreateChannelRequest, ToggleForumRequest
 
-from src.config import setup_logging, AppConfig
+from src.config import setup_logging, AppConfig, save_env_variable
 from src.ui import CLIWizard, console
 from src.storage import StorageRepository
 from src.service import ClonerService
@@ -56,8 +57,44 @@ async def main():
         if choice == 1: 
             if os.path.exists("topics_config.txt"):
                 os.remove("topics_config.txt")
+            
             src, tgt = CLIWizard.get_chat_ids()
             
+            # CORREÇÃO: Lógica para voltar ao menu principal
+            if src == 0 and tgt == 0:
+                continue
+            
+            # ATUALIZAÇÃO: Lógica para criar grupo se o destino for 0
+            if tgt == 0:
+                try:
+                    console.print("\n[yellow]Obtendo dados da origem para criar novo grupo...[/]")
+                    source_entity = await client.get_entity(src)
+                    new_title = f"{source_entity.title} [Backup]"
+                    
+                    console.print(f"[yellow]Criando supergrupo: {new_title}...[/]")
+                    
+                    # CORREÇÃO: Adicionado argumento obrigatório 'about'
+                    created = await client(CreateChannelRequest(
+                        title=new_title, 
+                        about="Backup gerado automaticamente pelo EncScript", 
+                        megagroup=True
+                    ))
+                    new_chat = created.chats[0]
+                    
+                    console.print("[yellow]Ativando funcionalidade de Tópicos...[/]")
+                    await client(ToggleForumRequest(channel=new_chat, enabled=True))
+                    
+                    tgt = new_chat.id
+                    console.print(f"[bold green]Grupo criado com sucesso! ID: {tgt}[/]")
+                    
+                    # Salva o novo ID no .env para sessões futuras
+                    save_env_variable('TARGET_CHAT', str(tgt))
+                    
+                except Exception as e:
+                    console.print(f"[bold red]Erro ao criar grupo automático: {e}[/]")
+                    input("Enter para voltar...")
+                    continue
+
             console.print("[yellow]Limpando dados anteriores para novo clone...[/]")
             storage.reset_chat_progress(src, tgt)
             break

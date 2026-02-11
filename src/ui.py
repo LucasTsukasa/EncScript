@@ -23,7 +23,7 @@ class CLIWizard:
     def show_welcome():
         CLIWizard.clear_screen()
         welcome_text = Text("Bem Vindo(a)!", justify="center", style="bold green")
-        panel = Panel(welcome_text, title="EncScript", subtitle="1.2.0", style="cyan")
+        panel = Panel(welcome_text, title="EncScript", subtitle="1.3.0", style="cyan")
         console.print(panel)
         console.print("\n[1] Conectar Conta (Aperte [bold white]Enter[/] Para continuar)")
         console.input()
@@ -98,7 +98,7 @@ class CLIWizard:
   Desenvolvido por: LucasTsukasa
   Github: https://github.com/LucasTsukasa
   Licença: GNU General Public License v3
-  Versão: 1.2.0
+  Versão: 1.3.0
 
   Este software é open-source e distribuído sob os termos da GPL v3.
   Veja o arquivo LICENSE para mais informações.
@@ -114,16 +114,39 @@ class CLIWizard:
         CLIWizard.clear_screen()
         console.print(Panel("Configuração de Clonagem", style="cyan"))
         
+        # CORREÇÃO: Removido [dim]... e adicionado opção [3] Voltar
+        console.print("[1] Criar Grupo c/Tópicos")
+        console.print("[2] Grupo c/Tópicos Criado")
+        console.print("[3] Voltar")
+        console.print()
+        
+        # CORREÇÃO: Adicionado '3' nas choices
+        mode = IntPrompt.ask("Escolha uma opção", choices=["1", "2", "3"], default="1")
+        
+        # CORREÇÃO: Retorna 0,0 se for voltar
+        if mode == 3:
+            return 0, 0
+        
         src = Prompt.ask("ID do Grupo [bold red]Origem[/] (Ex: -100...)")
-        tgt = Prompt.ask("ID do Grupo [bold green]Destino[/] (Ex: -100...)")
         
-        save_env_variable('SOURCE_CHAT', src)
-        save_env_variable('TARGET_CHAT', tgt)
+        tgt = 0
+        if mode == 2:
+            tgt = Prompt.ask("ID do Grupo [bold green]Destino[/] (Ex: -100...)")
+            tgt = int(tgt)
         
-        return int(src), int(tgt)
+        save_env_variable('SOURCE_CHAT', str(src))
+        save_env_variable('TARGET_CHAT', str(tgt))
+        
+        return int(src), tgt
 
     @staticmethod
-    def settings_menu(current: AppSettings) -> AppSettings:
+    def _save_settings_to_file(settings: AppSettings):
+        """Helper interno para salvar as configurações no JSON."""
+        with open("settings.json", "w") as f:
+            json.dump(settings.__dict__, f, indent=4)
+
+    @staticmethod
+    def _channel_settings_menu(current: AppSettings) -> AppSettings:
         while True:
             CLIWizard.clear_screen()
             
@@ -141,21 +164,15 @@ class CLIWizard:
             [5] Atualizar Descrição ..................... {fmt(current.update_desc)} [dim](Clona descrição/bio do grupo)[/]
             [6] Fechar Tópico ........................... {color_topic} [dim](ON = todos / PARCIAL = igual ao grupo origem)[/]
             [7] Fixar Tópicos ........................... {fmt(current.fix_topics)} [dim](Fixa tópicos conforme grupo origem)[/]
-            
-            [8] Tempo Máximo de Clonagem ................ [bold cyan]{current.max_session_hours}h[/]
-            [9] Tempo Máximo de Descanso ................ [bold cyan]{current.pause_duration_hours}h[/]
-            [10] Delay Entre cada Mensagem .............. [bold cyan]{current.delay_between_messages}s[/]
-            [11] Pausa a cada x mensagens ............... [bold cyan]{current.pause_every_x_messages}[/]
-            [12] Duração pausa a cada x mensagens ....... [bold cyan]{current.pause_duration_s}s[/]
 
             [0] Voltar
             """
             
-            console.print(Panel(menu_content, title="Configurações", style="yellow"))
+            console.print(Panel(menu_content, title="Configurações de Canais/Grupo", style="yellow"))
+            choice = Prompt.ask("Digite o número para alternar", choices=["0", "1", "2", "3", "4", "5", "6", "7"], default="0")
             
-            choice = Prompt.ask("Digite o número para alternar/editar", choices=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"], default="0")
-            
-            if choice == '0': break
+            if choice == '0':
+                break
             elif choice == '1': current.update_msgs_start = not current.update_msgs_start
             elif choice == '2': current.update_msgs_end = not current.update_msgs_end
             elif choice == '3': current.clean_visual = not current.clean_visual
@@ -166,19 +183,68 @@ class CLIWizard:
                 elif current.close_topics == "PARCIAL": current.close_topics = "OFF"
                 else: current.close_topics = "ON"
             elif choice == '7': current.fix_topics = not current.fix_topics
-            elif choice == '8':
+            
+            CLIWizard._save_settings_to_file(current)
+            
+        return current
+
+    @staticmethod
+    def _time_settings_menu(current: AppSettings) -> AppSettings:
+        while True:
+            CLIWizard.clear_screen()
+            
+            menu_content = f"""
+            [1] Tempo Máximo de Clonagem ................ [bold cyan]{current.max_session_hours}h[/]
+            [2] Tempo Máximo de Descanso ................ [bold cyan]{current.pause_duration_hours}h[/]
+            [3] Delay Entre cada Mensagem .............. [bold cyan]{current.delay_between_messages}s[/]
+            [4] Pausa a cada x mensagens ............... [bold cyan]{current.pause_every_x_messages}[/]
+            [5] Duração pausa a cada x mensagens ....... [bold cyan]{current.pause_duration_s}s[/]
+
+            [0] Voltar
+            """
+            
+            console.print(Panel(menu_content, title="Configurações de Tempo", style="yellow"))
+            choice = Prompt.ask("Digite o número para editar", choices=["0", "1", "2", "3", "4", "5"], default="0")
+            
+            if choice == '0':
+                break
+            elif choice == '1':
                 current.max_session_hours = FloatPrompt.ask("Novo tempo máximo (horas, 0 para desativar)")
-            elif choice == '9':
+            elif choice == '2':
                 current.pause_duration_hours = FloatPrompt.ask("Novo tempo de descanso (horas, 0 para desativar)")
-            elif choice == '10':
+            elif choice == '3':
                 current.delay_between_messages = FloatPrompt.ask("Novo delay (segundos, 0 para desativar)")
-            elif choice == '11':
+            elif choice == '4':
                 current.pause_every_x_messages = IntPrompt.ask("Pausar a cada quantas mensagens? (0 para desativar)")
-            elif choice == '12':
+            elif choice == '5':
                 current.pause_duration_s = IntPrompt.ask("Duração da pausa curta (segundos, 0 para desativar)")
             
-            with open("settings.json", "w") as f:
-                json.dump(current.__dict__, f, indent=4)
+            CLIWizard._save_settings_to_file(current)
+            
+        return current
+
+    @staticmethod
+    def settings_menu(current: AppSettings) -> AppSettings:
+        while True:
+            CLIWizard.clear_screen()
+            
+            menu_content = """
+            [1] Configurações de Canais/Grupo
+            [2] Configurações de Tempo
+            
+            [0] Voltar ao Menu Principal
+            """
+            
+            console.print(Panel(menu_content, title="Menu de Configurações", style="yellow"))
+            
+            choice = Prompt.ask("Escolha uma categoria", choices=["0", "1", "2"], default="0")
+            
+            if choice == '0':
+                break
+            elif choice == '1':
+                current = CLIWizard._channel_settings_menu(current)
+            elif choice == '2':
+                current = CLIWizard._time_settings_menu(current)
         
         return current
 
