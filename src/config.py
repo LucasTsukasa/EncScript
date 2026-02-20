@@ -16,13 +16,22 @@ class AppSettings:
     update_desc: bool = True
     close_topics: str = "PARCIAL"
     fix_topics: bool = True
+
+    # NOVAS CONFIGURAÇÕES (controle de destino / canais)
+    rename_existing_target: bool = True
+    forum_to_channel_topic_header: bool = True  # envia e fixa "Nome do Tópico" ao iniciar cada tópico
+    forum_to_channel_final_index: bool = True   # envia um índice no final (pode virar múltiplas msgs)
+    forum_to_channel_pin_final_index: bool = True
     
     # NOVAS CONFIGURAÇÕES (Itens 8 a 12)
     max_session_hours: float = 6.0
     pause_duration_hours: float = 1.0
-    delay_between_messages: float = 1.0
-    pause_every_x_messages: int = 200
+    delay_between_messages: float = 5.0
+    pause_every_x_messages: int = 300
     pause_duration_s: int = 60
+
+    # Performance
+    batch_size: int = 100
 
 @dataclass
 class AppConfig:
@@ -36,12 +45,21 @@ class AppConfig:
     
     max_session_hours: float = 6.0
     pause_duration_hours: float = 1.0
-    batch_size: int = 50
-    delay_between_messages: float = 1.0
-    pause_every_x_messages: int = 200
+    batch_size: int = 100
+    delay_between_messages: float = 5.0
+    pause_every_x_messages: int = 300
     pause_duration_s: int = 60
     
     session_name: str = "cloner_session"
+
+    # Ajuda o serviço a decidir comportamentos (ex: renomear destino)
+    target_created_by_app: bool = False
+
+    # Padrão único para nome do backup
+    backup_title_template: str = "{title} [Backup]"
+
+    def build_backup_title(self, source_title: str) -> str:
+        return self.backup_title_template.format(title=source_title)
 
     @property
     def max_session_seconds(self) -> float:
@@ -51,7 +69,6 @@ def setup_logging(clean_visual: bool = False):
     """Configura logging."""
     root = logging.getLogger()
     
-    # CORREÇÃO CRÍTICA: Iterar sobre uma cópia da lista [:] para evitar pular handlers durante a remoção
     if root.handlers:
         for handler in root.handlers[:]:
             root.removeHandler(handler)

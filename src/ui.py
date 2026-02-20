@@ -23,7 +23,7 @@ class CLIWizard:
     def show_welcome():
         CLIWizard.clear_screen()
         welcome_text = Text("Bem Vindo(a)!", justify="center", style="bold green")
-        panel = Panel(welcome_text, title="EncScript", subtitle="1.3.0", style="cyan")
+        panel = Panel(welcome_text, title="EncScript", subtitle="1.4.0", style="cyan")
         console.print(panel)
         console.print("\n[1] Conectar Conta (Aperte [bold white]Enter[/] Para continuar)")
         console.input()
@@ -98,7 +98,7 @@ class CLIWizard:
   Desenvolvido por: LucasTsukasa
   Github: https://github.com/LucasTsukasa
   Licença: GNU General Public License v3
-  Versão: 1.3.0
+  Versão: 1.4.0
 
   Este software é open-source e distribuído sob os termos da GPL v3.
   Veja o arquivo LICENSE para mais informações.
@@ -113,30 +113,50 @@ class CLIWizard:
     def get_chat_ids() -> tuple[int, int]:
         CLIWizard.clear_screen()
         console.print(Panel("Configuração de Clonagem", style="cyan"))
-        
-        # CORREÇÃO: Removido [dim]... e adicionado opção [3] Voltar
-        console.print("[1] Criar Grupo c/Tópicos")
-        console.print("[2] Grupo c/Tópicos Criado")
+
+        console.print("[1] Criar Novo Destino")
+        console.print("[2] Usar Destino Existente (grupo/canal/fórum)")
         console.print("[3] Voltar")
         console.print()
-        
-        # CORREÇÃO: Adicionado '3' nas choices
+
         mode = IntPrompt.ask("Escolha uma opção", choices=["1", "2", "3"], default="1")
-        
-        # CORREÇÃO: Retorna 0,0 se for voltar
+
         if mode == 3:
             return 0, 0
-        
-        src = Prompt.ask("ID do Grupo [bold red]Origem[/] (Ex: -100...)")
-        
+
+        src = Prompt.ask("ID do Chat [bold red]Origem[/] (Ex: -100...)")
+
         tgt = 0
         if mode == 2:
-            tgt = Prompt.ask("ID do Grupo [bold green]Destino[/] (Ex: -100...)")
-            tgt = int(tgt)
-        
+            tgt_raw = Prompt.ask("ID do Chat [bold green]Destino[/] (Ex: -100...)")
+            tgt = int(tgt_raw)
+        else:
+            # Criar novo destino: escolhe o tipo
+            while True:
+                CLIWizard.clear_screen()
+                console.print(Panel("Criar Novo Destino", style="cyan"))
+                console.print("[1] Canal")
+                console.print("[2] Grupo Normal (sem tópicos)")
+                console.print("[3] Grupo com Tópicos (Fórum)")
+                console.print("[4] Voltar")
+                console.print()
+                dest_mode = IntPrompt.ask("Escolha o tipo", choices=["1", "2", "3", "4"], default="3")
+
+                if dest_mode == 4:
+                    return 0, 0
+
+                # Usamos sentinelas (não são IDs reais) para o main criar o destino correto
+                if dest_mode == 1:
+                    tgt = -2  # criar CANAL
+                elif dest_mode == 2:
+                    tgt = -1  # criar GRUPO normal
+                else:
+                    tgt = 0   # criar GRUPO com tópicos (Fórum)
+                break
+
         save_env_variable('SOURCE_CHAT', str(src))
         save_env_variable('TARGET_CHAT', str(tgt))
-        
+
         return int(src), tgt
 
     @staticmethod
@@ -165,11 +185,20 @@ class CLIWizard:
             [6] Fechar Tópico ........................... {color_topic} [dim](ON = todos / PARCIAL = igual ao grupo origem)[/]
             [7] Fixar Tópicos ........................... {fmt(current.fix_topics)} [dim](Fixa tópicos conforme grupo origem)[/]
 
+            [8] Renomear Destino Existente .............. {fmt(current.rename_existing_target)} [dim](Só quando você usa destino já existente)[/]
+            [9] Fórum → Canal: Cabeçalho por Tópico ..... {fmt(current.forum_to_channel_topic_header)} [dim](Envia e fixa o nome do tópico antes de clonar)[/]
+            [10] Fórum → Canal: Índice Final ............ {fmt(current.forum_to_channel_final_index)} [dim](Cria um menu com links no final)[/]
+            [11] Fixar Índice Final ..................... {fmt(current.forum_to_channel_pin_final_index)} [dim](Fixa o menu do índice final)[/]
+
             [0] Voltar
             """
             
             console.print(Panel(menu_content, title="Configurações de Canais/Grupo", style="yellow"))
-            choice = Prompt.ask("Digite o número para alternar", choices=["0", "1", "2", "3", "4", "5", "6", "7"], default="0")
+            choice = Prompt.ask(
+                "Digite o número para alternar",
+                choices=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+                default="0"
+            )
             
             if choice == '0':
                 break
@@ -183,6 +212,10 @@ class CLIWizard:
                 elif current.close_topics == "PARCIAL": current.close_topics = "OFF"
                 else: current.close_topics = "ON"
             elif choice == '7': current.fix_topics = not current.fix_topics
+            elif choice == '8': current.rename_existing_target = not current.rename_existing_target
+            elif choice == '9': current.forum_to_channel_topic_header = not current.forum_to_channel_topic_header
+            elif choice == '10': current.forum_to_channel_final_index = not current.forum_to_channel_final_index
+            elif choice == '11': current.forum_to_channel_pin_final_index = not current.forum_to_channel_pin_final_index
             
             CLIWizard._save_settings_to_file(current)
             
@@ -200,11 +233,13 @@ class CLIWizard:
             [4] Pausa a cada x mensagens ............... [bold cyan]{current.pause_every_x_messages}[/]
             [5] Duração pausa a cada x mensagens ....... [bold cyan]{current.pause_duration_s}s[/]
 
+            [6] Tamanho do Lote (batch) ................. [bold cyan]{current.batch_size}[/]
+
             [0] Voltar
             """
             
             console.print(Panel(menu_content, title="Configurações de Tempo", style="yellow"))
-            choice = Prompt.ask("Digite o número para editar", choices=["0", "1", "2", "3", "4", "5"], default="0")
+            choice = Prompt.ask("Digite o número para editar", choices=["0", "1", "2", "3", "4", "5", "6"], default="0")
             
             if choice == '0':
                 break
@@ -218,6 +253,8 @@ class CLIWizard:
                 current.pause_every_x_messages = IntPrompt.ask("Pausar a cada quantas mensagens? (0 para desativar)")
             elif choice == '5':
                 current.pause_duration_s = IntPrompt.ask("Duração da pausa curta (segundos, 0 para desativar)")
+            elif choice == '6':
+                current.batch_size = IntPrompt.ask("Novo batch size (ex: 20-100)", default=current.batch_size)
             
             CLIWizard._save_settings_to_file(current)
             
